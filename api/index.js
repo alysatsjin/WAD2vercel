@@ -62,6 +62,6 @@ app.get('/cancel', (req, res) => {
     res.sendFile(path.join(__dirname, 'views/Cart.html'));
 })
 
-app.listen(3001, () => console.log('Server started on port 3001'));
+// app.listen(3001, () => console.log('Server started on port 3001'));
 
 module.exports = app;
