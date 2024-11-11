@@ -7,7 +7,8 @@
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyBQuzhT9kh6CvwzIE-diZ21XzKB8N_Ypz8",
-  authDomain: "wad2-3b994.firebaseapp.com",
+  // authDomain: "wad2-3b994.firebaseapp.com",
+  authDomain: "https://wad2-vercel.vercel.app",
   databaseURL: "https://wad2-3b994-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "wad2-3b994",
   storageBucket: "wad2-3b994.firebasestorage.app",
