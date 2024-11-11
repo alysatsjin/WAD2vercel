@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RentMyTools | About Us</title>
+
+        <!-- Required Links Here -->
+    <!-- Reactive Dependencies -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <!-- Firebase Dependencies -->
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore-compat.js"></script>
+    <!-- Styling Dependencies -->
+    <link rel="stylesheet" href="assets/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+
+<body>
+    <div id="about-us">
+        <!-- Navigation Bar -->
+        <nav-bar></nav-bar>
+
+        <!-- Page Header Section -->
+        <div class="pageheader">
+            <div class="container titlebox">
+                <h1>About Us</h1>
+            </div>
+        </div>
+
+        <!-- About Section -->
+        <div class="container mt-5">
+            <h2>Our Story</h2>
+            <p>Welcome to RentMyTools, where we believe that every project deserves the right tools to bring ideas to
+                life.
+                Our journey began with a simple realization: not everyone has the means or space to own a full set of
+                power
+                tools.
+                Whether you’re a DIY enthusiast, a budding contractor, or someone tackling home improvements, we saw an
+                opportunity to make quality tools accessible to everyone.</p>
+
+            <h2>Our Mission</h2>
+            <p>To make home improvement accessible and affordable, allowing our users to tackle projects without the
+                burden
+                of purchasing equipment they only need occasionally.
+            </p>
+            <p>We empower individuals to bring their creative visions to life while enabling equipment owners to earn
+                income
+                from their unused tools.
+                Together, we’re fostering a community that values sustainability, convenience, and innovation in every
+                project.
+            </p>
+
+            <h2>Meet Our Team</h2>
+            <div class="row mt-4">
+                <div class="col-md-4 mb-4">
+                    <div class="card team-member">
+                        <img src="https://via.placeholder.com/150" class="card-img-top" alt="Team Member 1">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">John Doe</h5>
+                            <p class="card-text">Founder & CEO</p>
+                            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4 mb-4">
+                    <div class="card team-member">
+                        <img src="https://via.placeholder.com/150" class="card-img-top" alt="Team Member 2">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Jane Smith</h5>
+                            <p class="card-text">Marketing Director</p>
+                            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4 mb-4">
+                    <div class="card team-member">
+                        <img src="https://via.placeholder.com/150" class="card-img-top" alt="Team Member 3">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Alice Johnson</h5>
+                            <p class="card-text">Customer Support Lead</p>
+                            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Call to Action -->
+            <hr />
+            <div class="text-center">
+                <h3>Join Us on Our Journey!</h3>
+                <p>We are excited to have you as part of our community. Explore our products and be part of our story!
+                </p>
+            </div>
+
+            <!-- Footer -->
+            <template-footer></template-footer>
+        </div>
+    </div>
+</body>
+
+<script>
+    const app = Vue.createApp({})
+</script>
+<script src="components.js"></script>
+<script>app.mount("#about-us")</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</html>

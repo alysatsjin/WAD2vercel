@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RentMyTools | Search Results</title>
+
+    <!-- Required Links Here -->
+    <!-- Reactive Dependencies -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <!-- Firebase Dependencies -->
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore-compat.js"></script>
+    <!-- Styling Dependencies -->
+    <link rel="stylesheet" href="assets/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+</head>
+
+<body>
+    <div id="search-results">
+        <!-- Navigation Bar -->
+        <nav-bar></nav-bar>
+
+        <!-- Page Header Section -->
+        <div class="container mt-2">
+            <div class="pageheader">
+                <h2 class="text-center">Products search</h2>
+            </div>
+
+            <div class="my-3">
+                <div class="row align-items-center">
+                    <!-- Input and Button -->
+                    <div class="col-md-8 d-flex">
+                        <input type="text" v-model="searchQuery" class="form-control me-2"
+                            placeholder="Search for products..." @input="performSearch">
+                        <button class="btn btn-primary" @click="performSearch">Search</button>
+                    </div>
+
+                    <!-- Link -->
+                    <div class="col-md-4 text-end">
+                        <a href="searchDynamic.html" class="ms-auto">Search Dynamically by Task</a>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="results-container">
+                <div v-if="searchQuery.length == 0"></div>
+                <div v-else-if="Object.keys(filteredProducts).length > 0">
+                    <div class="card mb-3" v-for="[id, product] of Object.entries(filteredProducts)" :key="id">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <h5 class="card-title">{{ product.name }}</h5>
+                                    <img :src="product.img" class="product-image" style="max-height: 200px;">
+                                </div>
+                                <div class="col-md-6">
+                                    <h5 class="card-title">Listed By:
+                                        <a :href="'profile.html?user='+product.ownerid" class="text-decoration-none">
+                                            <h5 class="text-mute d-inline">{{product.ownerusername}}</h5>
+                                        </a>
+                                    </h5>
+                                    <p class="fw-medium">Pick Up @ {{product.location}}</p>
+                                    <h4 class="card-text text-success">${{product.price}} / day</h4>
+                                    <!-- Useful for tasks -->
+                                    <div class="row">
+                                        <div class="col-6">
+                                            Tasks:
+                                            <ul>
+                                                <li class="card-text" v-for="task in product.tasks">
+                                                    {{capitalizeWords(task)}}
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-6">
+                                            Features:
+                                            <ul>
+                                                <li class="card-text" v-for="feature in product.features">
+                                                    {{capitalizeWords(feature)}}
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="d-block d-md-none"><br><br></div>
+                                    <form action="product.html">
+                                        <input type="hidden" name="productid" :value="id">
+                                        <input type="submit" class="btn btn-primary view-product mb-1"
+                                            value="View Product" name="view">
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div v-else-if="noProducts">
+                    <div class="alert alert-warning">No products found.</div>
+                </div>
+            </div>
+
+
+            <!-- Footer -->
+            <template-footer></template-footer>
+        </div>
+    </div>
+</body>
+
+<script src="firebaseFunctions.js"></script>
+<script>
+    const app = Vue.createApp({
+        data() {
+            return {
+                searchQuery: "",
+                filteredProducts: {},
+                noProducts: null
+            };
+        },
+
+        created() {
+            // Fetch products when the component is created
+            this.searchQuery = this.getParameter()
+            this.fetchProducts(this.searchQuery)
+        },
+
+        methods: {
+            getParameter() {
+                const params = new URLSearchParams(window.location.search);
+                if (params.get('toolsearch') != null) {
+                    return this.toolSearch = params.get('toolsearch')
+                }
+                return this.searchQuery = ""
+            },
+
+            async fetchProducts(query) {
+                this.filteredProducts = {}
+                this.noProducts = null
+                if (query == "") {
+                    this.noProducts = true
+                    return
+                }
+                else {
+                    query = query.toLowerCase()
+                    const products = await getAllProducts();
+                    for (let [id, product] of Object.entries(products)) {
+                        if (product.name.toLowerCase().search(query) >= 0) {
+                            this.filteredProducts[id] = product
+                            continue
+                        }
+                        else if (product.location.toLowerCase().search(query) >= 0) {
+                            this.filteredProducts[id] = product
+                            continue
+                        }
+                        for (let feature of product.features) {
+                            let isRevelant = false
+                            if (feature.toLowerCase().search(query) >= 0) {
+                                this.filteredProducts[id] = product
+                                isRevelant = true
+                            }
+                            if (isRevelant) { continue }
+                        }
+                        // Task Search?
+                        // for (let task of product.tasks){
+                        //     let isRevelant = false
+                        //     if (task.toLowerCase().search(query) >= 0){
+                        //         this.filteredProducts[id] = product
+                        //         isRevelant = true
+                        //     }
+                        //     if (isRevelant) {continue}
+                        // }
+                    }
+                }
+                if (Object.keys(this.filteredProducts).length == 0) {
+                    this.noProducts = true
+                }
+            },
+
+            async performSearch() {
+                await this.fetchProducts(this.searchQuery)
+            },
+
+            capitalizeWords(str) {
+                return str.split(' ').map(word =>
+                    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                ).join(' ');
+            }
+        },
+    })
+</script>
+<script src="components.js"></script>
+<script>app.mount("#search-results")</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+
+</html>

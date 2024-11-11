@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <!-- 
+    Welcome to this pretty messy dynamic search file!
+    Hopefully theres enough comments in here to make sense of things
+    General flow of the file is:
+
+    1. HTML/bootstrap Page display stuff
+    2. Vue to initialize data
+    3. JS to declare variables, functions, etc.
+    4. Google maps API initialization stuff
+    5. Google maps product markers, in a timeout chunk so it doesnt break :,)
+
+    googlemaps is col-md-12 FOR TESTING PURPOSES (so i can see)
+
+    CHANGELOG (for my(junwei) own tracking, i save manual copies because i am a paranoid fella)
+    ver1 basic 
+    ver2 buttons to add more search queries (add another search)
+    ver3 bootstrap card side-by-side, reactive layout. general aesthetic edit
+    ver4 delete button to each bootstrap card test
+    ver5 googlemaps api
+    ver6 github integration w database stuff
+    ver7 31/10 googlemaps user markers
+    ver8 3/11 googlemaps product markers functionality (unique marker function etc.)
+    -->
+
+    <!-- required meta tags for Bootstrap to work + Bootstrap CSS -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>RentMyTools | Dynamic Search</title>
+
+    <!-- Dependencies -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore-compat.js"></script>
+    <script
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAu4N74o6NubV8XtRivgxWr0FttNCoEVXY&loading=async&libraries=geometry"
+        async defer></script>
+    <link rel="stylesheet" href="assets/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+    <!-- .hidden to hide the other dropdown options -->
+    <!-- #map for the googlemaps API -->
+    <style>
+        .hidden {
+            display: none;
+        }
+
+        #map {
+            height: 300px;
+            width: 100%;
+        }
+
+        button {
+            margin-bottom: 20px;
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .card {
+            border: 1px solid #ddd;
+        }
+
+        .card-title {
+            font-weight: bold;
+        }
+    </style>
+
+</head>
+
+<body>
+    <script src="firebaseFunctions.js"></script>
+
+    <!-- 1. Search Queries -->
+    <!-- 1. Search Queries -->
+    <!-- 1. Search Queries -->
+    <div id="search">
+        <nav-bar></nav-bar>
+        <div class="pageheader text-center" style="height: 200px;">
+            <div class="container">
+                <h1>Dynamic search</h1>
+            </div>
+        </div>
+
+        <div class="container mt-3">
+            <div class="row">
+
+                <!-- Map display -->
+                <div class="col-md-12 col-lg-6">
+                    <div class="card" style="min-height: 400px;">
+                        <div class="card-body">
+                            <h5 class="card-title">Set your location!</h5>
+                            <div id="map" style="height: 330px; border-radius: 2%;"></div>
+                            <label for="radiusRange" class="form-label mt-1">Search within: {{ marker_distance_user_display }}km</label>
+                            <input type="range" class="form-range" id="radiusRange" min="1" max="50" step="1" value="5" oninput="window.marker_circle_update(this.value)">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Query display -->
+                <div id="app" class="col-md-12 col-lg-6">
+                    <div class="card" style="min-height: 400px;">
+                        <div class="card-body">
+                            <h5 class="card-title">Find your tools!</h5>
+
+                            <div>
+                                <button class="btn btn-success" @click="search_addDropdown">Add Query</button>
+                                <div id="selections-output" class="mt-4"></div>
+                            </div>
+
+                            <!-- Task selector -->
+                            <div class="row">
+                                <div v-for="(dropdown, index) in search_query" :key="index" class="col-xl-3 col-lg-6 col-md-3 mb-3">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <button class="btn btn-danger" @click="search_deleteDropdown(index)">Remove</button>
+
+                                            <h5 class="card-title">What tasks?</h5>
+                                            <select class="form-control first-dropdown"
+                                                @change="search_updateQuery(index, $event, 'task')">
+                                                <option v-for="task in firebase_product_tasks" :key="task">{{task}}
+                                                </option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <!-- Feature selector -->
+                                    <div v-if="dropdown.showSecondDropdown" class="card mb-3 second-dropdown-container">
+                                        <div class="card-body">
+
+                                            <h5 class="card-title">What features?</h5>
+                                            <select class="form-control second-dropdown" v-model="dropdown.feature"
+                                                @change="search_updateQuery(index, $event, 'feature')">
+                                                <option v-for="feature in firebase_product_features" :key="feature">
+                                                    {{feature}}</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- 1. Search Results -->
+        <!-- 1. Search Results -->
+        <!-- 1. Search Results -->
+        <div class="container mt-3">
+            <div class="results-container mt-3">
+                <h3>Search Results </h3>
+                <div v-if="Object.keys(filteredProducts).length > 0">
+                    <div class="card mb-3" v-for="[id, product] of Object.entries(filteredProducts)" :key="id">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <h5 class="card-title">{{ product.name }}</h5>
+                                    <img :src="product.img" class="product-image" style="max-height: 200px;">
+                                </div>
+                                <div class="col-md-6">
+                                    <h5 class="card-title">Listed By:
+                                        <a :href="'profile.html?user='+product.ownerid" class="text-decoration-none">
+                                            <h5 class="text-mute d-inline">{{product.ownerid}}</h5>
+                                        </a>
+                                    </h5>
+                                    <p class="fw-medium">Pick Up @ {{product.location}}</p>
+                                    <h4 class="card-text text-success">${{product.price}} / day</h4>
+                                    <!-- Useful for tasks -->
+                                    Tasks:
+                                    <ul>
+                                        <li class="card-text" v-for="task in product.tasks">{{capitalizeWords(task)}}
+                                        </li>
+                                    </ul>
+                                    Features:
+                                    <ul>
+                                        <li class="card-text" v-for="feature in product.features">
+                                            {{capitalizeWords(feature)}}</li>
+                                    </ul>
+                                    <form action="product.html">
+                                        <input type="hidden" name="productid" :value="id">
+                                        <input type="submit" class="btn btn-primary view-product mb-1"
+                                            value="View Product" name="view">
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div v-else>
+                    <div class="alert alert-warning">No products found.</div>
+                </div>
+            </div>
+
+            <template-footer></template-footer>
+        </div>
+
+    </div>
+
+    <script>
+        // 2. VUE Stuff
+        // 2. VUE Stuff
+        // 2. VUE Stuff
+
+        const app = Vue.createApp({
+
+            //vue_default: '#app',
+
+            data() {
+                return {
+                    map: null, //for Googlemaps API: map itself
+                    infoWindow: null, //for Googlemaps API:
+                    pos: null, //for Googlemaps API:
+                    pos_str: "", //for Googlemaps API:
+                    marker_user: null, //for Googlemaps API:
+                    marker_product_id: 0, //for Googlemaps API:
+                    marker_product_array: [], //for Googlemaps API:
+                    marker_product_array_visible: [], //for Googlemaps API:
+                    marker_distance_user: 5000, //for Googlemaps API:
+                    marker_distance_user_display: 5,
+                    marker_circle: null,
+                    vue_product_marker_info: [], //for Googlemaps API:
+                    marker_icon_orange: null,
+                    marker_icon_grey: null,
+                    marker_icon_green: null,
+
+                    firebase_products: [],
+                    firebase_products_searched: [],
+                    firebase_product_features: ["-select-"],
+                    firebase_product_tasks: ["-select-"],
+                    firebase_product_features_string: "",
+                    firebase_product_tasks_string: "",
+                    search_query_count: 0,
+                    search_query: [],
+                    search_product_within_range: [],
+
+                    searchQuery: "",
+                    filteredProducts: {},
+                };
+            },
+
+            async created() {
+                this.searchQuery = this.getParameter();
+                await this.fetchProducts(this.searchQuery);
+                await this.marker_product_information();
+                await this.firebase_product_import();
+                //await this.loadGoogleMaps(); //load gmaps
+                this.search_addDropdown() //add first dropdown
+
+                window.initMap = this.initMap.bind(this);
+                window.map_product_markers = this.map_product_markers.bind(this);
+                window.marker_search_distance = this.marker_search_distance.bind(this);
+                window.marker_circle_update = this.marker_circle_update.bind(this);
+            },
+
+            methods: {
+                // GOOGLE MAPS SECTION
+                // GOOGLE MAPS SECTION
+                // GOOGLE MAPS SECTION
+
+                initMap() {
+            
+                    if (typeof google === "undefined" || !google.maps) {
+                        console.error("Google Maps API is not loaded properly.");
+                        return;
+                    }
+
+                    this.map = new google.maps.Map(document.getElementById('map'), {
+                        center: { lat: -34.397, lng: 150.644 },
+                        zoom: 11,
+                        disableDefaultUI: true,
+                    });
+
+                    this.infoWindow = new google.maps.InfoWindow();
+
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition((position) => {
+                            this.pos = {
+                                lat: position.coords.latitude,
+                                lng: position.coords.longitude
+                            };
+                            this.map.setCenter(this.pos);
+                            this.marker_user_set(this.map, this.pos);
+                        }, () => {
+                            this.map_handleLocationError(true, this.map.getCenter());
+                        });
+                    } else {
+                        this.map_handleLocationError(false, this.map.getCenter());
+                    }
+
+                    google.maps.event.addListener(this.map, 'click', (event) => {
+                        this.marker_user_set(this.map, event.latLng);
+                    });
+                },
+
+                map_handleLocationError(browserHasGeolocation, pos) {
+                    this.infoWindow.setPosition(pos);
+                    this.infoWindow.setContent(browserHasGeolocation ?
+                        'Error: The Geolocation service failed.' :
+                        'Error: Your browser doesn\'t support geolocation.');
+                    this.infoWindow.open(this.map);
+                },
+
+                //Place a merker on users current location
+                marker_user_set(map, location) {
+                    
+                    if (!this.marker_user || !this.marker_user.setPosition) {
+                        this.marker_user = new google.maps.Marker({
+                            position: location,
+                            map: map,
+                        });
+                    } else {
+                        this.marker_user.setPosition(location);
+                    }
+                    this.pos = location;
+                    //this.search_updateSearch();
+                    this.marker_circle = new google.maps.Circle({
+                        map: this.map,
+                        radius: this.marker_distance_user, //distance set by user
+                        fillColor: "#FF0000",
+                        fillOpacity: 0.2,
+                        strokeColor: "#FF0000",
+                        strokeOpacity: 0.5,
+                        strokeWeight: 2,
+                    });
+            
+                    // Bind the circle's center to the marker's position
+                    this.marker_circle.bindTo("center", this.marker_user, "position");
+                },
+
+                async marker_product_information() {
+                    
+                    const products = await this.getProducts();
+                    for (const [id, product] of Object.entries(products)) {
+                        this.vue_product_marker_info.push({
+                            id,
+                            name: product.name,
+                            price: product.price,
+                            img: "data/" + product.img,
+                            location: product.location,
+                            coordinates: product.coordinates,
+                            img_raw: product.img
+                        });
+                    }
+                    
+                },
+
+                marker_distance(user_marker, product_marker) {
+                    const distance = google.maps.geometry.spherical.computeDistanceBetween(
+                        user_marker.getPosition(),
+                        product_marker.getPosition()
+                    );
+
+                    // Convert distance from meters to kilometers
+                    const distance_Km = (distance / 1000).toFixed(2);
+                    console.log(`Distance between markers: ${distanceInKm} km`);
+                },
+
+                /// FIREBASE SECTION
+                /// FIREBASE SECTION
+                /// FIREBASE SECTION
+
+                async firebase_product_import() {
+                    
+                    let result = await getAllProducts();
+                    this.firebase_products = result;
+
+                    for (const product of Object.values(result)) {
+                        for (const feature of product.features) {
+                            if (!this.firebase_product_features.includes(feature)) {
+                                //console.log("feature test", feature);
+                                this.firebase_product_features.push(feature);
+                            }
+                        }
+                        for (const task of product.tasks) {
+                            if (!this.firebase_product_tasks.includes(task)) {
+                                //console.log("task test", task);
+                                this.firebase_product_tasks.push(task);
+                            }
+                        }
+                    }
+                },
+
+                /// MATTHEWSEARCH SECTION
+                /// MATTHEWSEARCH SECTION
+                /// MATTHEWSEARCH SECTION
+
+                getParameter() {
+                    
+                    const params = new URLSearchParams(window.location.search);
+                    return params.get('toolsearch') || "";
+                },
+
+                async getProducts() {
+                    
+                    try {
+                        const response = await axios.get("data/products.json");
+                        return response.data;
+                    } catch (error) {
+                        
+                        return {};
+                    }
+                },
+
+                async fetchProducts(query) {
+                    
+
+                    this.filteredProducts = {} //reset filtered products
+                    const products = await getAllProducts(); // gets all products
+
+                    for (let search of Object.values(query)) {
+                        for (let [id, product] of Object.entries(products)) {
+
+                            // Search scenario 1: 
+                            // If a task is specified, but no feature is specified,
+                            // Display all products that include this task
+                            if (search.task && (!search.feature || search.feature === "-select-")) {
+                                if (product.tasks.includes(search.task)) {
+                                    
+                                    this.filteredProducts[id] = product
+                                }
+                            }
+                            // Search scenario 2:
+                            // If both a task and feature are specified,
+                            // Only display a product that fulfills both requirements
+                            if (search.task && search.feature) {
+                                if (product.tasks.includes(search.task) && product.features.includes(search.feature)) {
+                                    
+                                    this.filteredProducts[id] = product
+                                }
+
+                            }
+
+                        }
+                    }
+                    
+                },
+
+                async performSearch() {
+                    
+                    await this.fetchProducts(this.search_query);
+                },
+
+                capitalizeWords(str) {
+                    return str.split(' ').map(word =>
+                        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                    ).join(' ');
+                },
+
+                /// SEARCH SECTION
+                /// SEARCH SECTION
+                /// SEARCH SECTION
+
+                search_addDropdown() {
+                    
+                    if (this.search_query_count < 4) {
+                        this.search_query_count++;
+                        this.search_query.push({
+                            search_query_id: this.search_query_count,
+                            showSecondDropdown: false,
+                            task: null,
+                            feature: null,
+                        });
+                    }
+                },
+
+                search_updateQuery(index, event, type) {
+                    
+                    //console.log("type: ", type);
+                    this.search_query[index].showSecondDropdown = true;  // Show the second dropdown
+                    if (type === 'task') {
+                        this.search_query[index].task = event.target.value;
+                    }
+                    if (type === 'feature') {
+                        this.search_query[index].feature = event.target.value;
+                    }
+                    this.performSearch();
+                },
+
+                search_deleteDropdown(index) {
+                
+                    this.search_query.splice(index, 1);
+                    this.search_query_count--;
+                    this.performSearch();
+                },
+
+                search_showSelections() {
+                    
+                    const output = document.getElementById('selections-output');
+                    output.innerHTML = '<h5>Current Selections:</h5><pre>' + JSON.stringify(this.search_query, null, 2) + '</pre>';
+                },
+
+                // 6. Googlemaps product markers
+                // 6. Googlemaps product markers
+                // 6. Googlemaps product markers
+
+                map_product_markers() {
+                    
+                    this.vue_product_marker_info.forEach((product, marker_product_id) => {
+
+                        // increase markerid count (++ doesnt work. odd...)
+                        marker_product_id = marker_product_id + 1;
+
+                        // Parse coordinates into LatLng for googlemaps API to understand
+                        const placeMarker_products_latLng = new google.maps.LatLng(product.coordinates.latitude, product.coordinates.longitude)
+
+                        // Creates an orange icon for markers to use
+                        // Creates an grey icon for markers to use
+                        // Creates an green icon for markers to use
+                        this.marker_icon_orange = {
+                            url: "assets/img/marker_orange.png", // URL of the image
+                            scaledSize: new google.maps.Size(40, 40), // Size of the icon
+                            origin: new google.maps.Point(0, 0), // Origin point of the icon
+                            anchor: new google.maps.Point(20, 40), // Anchor point of the icon
+                        };
+                        this.marker_icon_grey = {
+                            url: "assets/img/marker_grey.png", // URL of the image
+                            scaledSize: new google.maps.Size(40, 40), // Size of the icon
+                            origin: new google.maps.Point(0, 0), // Origin point of the icon
+                            anchor: new google.maps.Point(20, 40), // Anchor point of the icon
+                        };
+                        this.marker_icon_green = {
+                            url: "assets/img/marker_green.png", // URL of the image
+                            scaledSize: new google.maps.Size(40, 40), // Size of the icon
+                            origin: new google.maps.Point(0, 0), // Origin point of the icon
+                            anchor: new google.maps.Point(20, 40), // Anchor point of the icon
+                        };
+
+                        // Create a marker with the LatLng, give it a icon
+                        marker_product = new google.maps.Marker({
+                            position: placeMarker_products_latLng,
+                            map: this.map,
+                            title: `Product: ${product.name}`,
+                            label: `${marker_product_id}`,
+                            icon: this.marker_icon_grey,
+                            optimized: false,
+                        });
+
+                        // Add a click listener for each marker, and set up the info window.
+                        marker_product.addListener("click", () => {
+                            console.log("marker name:", product.name);
+                            console.log("marker id:", marker_product_id);
+                            console.log("marker coords:", product.coordinates);
+                        });
+                        // Add marker to array
+                        this.marker_product_array.push(marker_product);
+                    });
+                },
+
+                // Google maps search by distance
+                // Google maps search by distance
+                // Google maps search by distance
+
+                marker_circle_update(value) {
+                    this.marker_distance_user_display = value //update user display
+                    this.marker_distance_user = value * 1000; // Convert km to meters
+                    this.marker_circle.setRadius(this.marker_distance_user);
+                    marker_search_distance()
+                    
+                },
+
+                marker_search_distance() {
+                    
+                    this.marker_product_array_visible = [] //reset visible array
+                    let all_products = this.firebase_products
+
+                    // Loop through each marker in marker_product_array
+                    this.marker_product_array.forEach((marker) => {
+                        // Calculate distance from main_marker to each marker in meters
+                        if (marker && marker.getPosition()) {
+                            distance = google.maps.geometry.spherical.computeDistanceBetween(
+                                this.marker_user.getPosition(),
+                                marker.getPosition()
+                            );
+                        }
+                        //console.log("distance", distance)
+
+                        // Check if the distance is within user defined marker_search_distance
+                        if (distance <= this.marker_distance_user) {
+                            //this.marker_product_array_visible.push(marker); // Add to nearby markers if within 1km
+                            marker.setIcon(this.marker_icon_green);
+                        }
+                        else{
+                            marker.setIcon(this.marker_icon_grey);
+                        }
+                    });
+                    //console.log("- marker_product_array_visible", this.marker_product_array_visible)
+                }
+            }
+        })
+    </script>
+    <script src="components.js"></script>
+    <script>
+        app.mount('#search');
+
+
+        // Primitive way of loading gmaps
+        // smart ways were giving issues (see line 250)
+        setTimeout(() => {
+            window.initMap() //map
+        }, 1000);
+
+        setTimeout(() => {
+            window.map_product_markers(); //create product markers
+        }, 1500);
+
+        setTimeout(() => {
+            window.marker_search_distance();
+        }, 1500);
+    </script>
+
+    <!-- required dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.3.0/js/bootstrap.min.js"></script>
+</body>
+
+<!-- welcome to the bottom of the code. -->
+<!-- i come here to cry while eating crackers at 4am working on this thing-->
+
+</html>

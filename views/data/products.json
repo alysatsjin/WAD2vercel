@@ -1,0 +1,82 @@
+{
+    "P1":{
+        "name": "Metabo Cordless Screw Driver",
+        "features": ["cordless","screwdriver","lightweight"],
+        "tasks": ["handtools"],
+        "price": 99.99,
+        "location": "Banyan Road",
+        "coordinates": {
+            "latitude": 1.3399,
+            "longitude": 103.8878
+        },
+        "img": "listingimages/metabo_cordless_screwdriver.jpg",
+        "ownerid" : "Bob Builder",
+        "ownerusername": "@bobthebuilder",
+        "reviews": ["review1","review2"],
+        "video": "https://www.youtube.com/embed/HlOWsWpQpmo?si=6rUXw_BjLK3zbkYq"
+    },
+    "P2":{
+        "name": "Einhell Wet and Dry Vacuum",
+        "features": ["vacuum"],
+        "tasks": ["cleaning"],
+        "price": 89.99,
+        "location": "Kim Chuan Road",
+        "coordinates": {
+            "latitude": 1.3399,
+            "longitude": 103.8878
+        },
+        "img": "listingimages/einhell_wet_and_dry_vacuum.jpg",
+        "ownerid": "Bob Builder",
+        "ownerusername": "@bobthebuilder",
+        "reviews": [],
+        "video": ""
+    },
+    "P3":{
+        "name": "Einhell Cordless Window Cleaner",
+        "features": ["window cleaner","lightweight"],
+        "tasks": ["cleaning","handtools"],
+        "price": 79.99,
+        "location": "Nanyang Avenue",
+        "coordinates": {
+            "latitude": 1.34583,
+            "longitude": 103.68166
+        },
+        "img": "listingimages/EINHELL_CORDLESS_WINDOW_CLEANER.jpg",
+        "ownerid": "Mr Builder",
+        "ownerusername": "@user2",
+        "reviews": ["review3"],
+        "video": "https://www.youtube.com/embed/Fu2iQsjqcxg?si=WtdkUhcvqC3Pw4qQ"
+    },
+    "P4":{
+        "name": "Karcher Wet and Dry Vacuum",
+        "features": ["vacuum"],
+        "tasks": ["cleaning"],
+        "price": 69.99,
+        "location": "Scotts Road",
+        "coordinates": {
+            "latitude": 1.31055,
+            "longitude": 103.8365
+        },
+        "img": "listingimages/KARCHER_WET_AND_DRY_VACUUM.jpg",
+        "ownerid": "Wendy Builder",
+        "ownerusername": "@user3",
+        "reviews": [],
+        "video": ""
+    },
+    "P5":{
+        "name": "DekoPro Drill Set",
+        "features": ["cordless","drill"],
+        "tasks": ["handtools"],
+        "price": 59.99,
+        "location": "Nanyang Avenue",
+        "coordinates": {
+            "latitude": 1.34583,
+            "longitude": 103.68166
+        },
+        "img": "listingimages/DEKOPRO_DRILL_SET.jpg",
+        "ownerid": "Wendy Builder",
+        "ownerusername": "@user3",
+        "reviews": [],
+        "video": ""
+    }
+}

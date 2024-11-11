@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RentMyTools | Home</title>
+
+    <!-- Required Links Here -->
+    <!-- Reactive Dependencies -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <!-- Firebase Dependencies -->
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore-compat.js"></script>
+    <!-- Styling Dependencies -->
+    <link rel="stylesheet" href="assets/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .profile-info {
+            text-align: center;
+            margin-top: -120px;
+        }
+
+        .profile-info img {
+            border-radius: 50%;
+            width: 150px;
+            height: 150px;
+            border: 3px solid white;
+            background-color: white;
+            object-fit: contain
+        }
+    </style>
+</head>
+
+<body>
+    <div id="featured-products">
+        <!-- Navigation Bar -->
+        <nav-bar></nav-bar>
+
+
+        <!-- Page Header Section -->
+        <div class="container">
+            <div class="pageheader"></div>
+            <div class="row">
+                <div class="profile-info col-md-3">
+                    <img :src="userprofilepicture" alt="Avatar" width>
+                    <h4>{{username}}</h4>
+                    <p>{{userrating}} ⭐ ({{reviewcount}} reviews)</p>
+                    <!-- Only show if own profile -->
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script src="firebaseFunctions.js"></script>
+<script>
+    const app = Vue.createApp({
+        data() {
+            return {
+                loginid: "Bob Builder",            // To store login cache details
+                userid: sessionStorage['userId'],
+                username: "",
+                userproductids: [],
+                userproducts: [],
+                userbookingids: [],
+                userbookings: [],
+                userrentout: [],
+                userreviewids: [],
+                userreviews: [],
+                userrating: 0,
+                reviewcount: 0,
+                userprofilepicture: "",
+                successMessage: "none",
+                errorMessage: "none",
+                resultMessage: "Test"
+            }
+        },
+
+        async created() {
+            await this.getUserInfo()
+        },
+
+
+        methods: {
+            async getUserInfo() {
+                try {
+                    const userInfo = await getUser(this.userid)
+                    this.username = userInfo.username
+                    this.userproductids = userInfo.listings
+                    this.userbookingids = userInfo.bookings
+                    this.userreviewids = userInfo.reviews
+                    if (userInfo.profilepicture == "") {
+                        this.userprofilepicture = "data/profilepictures/defaultdp.jpg"
+                    }
+                    else {
+                        this.userprofilepicture = userInfo.profilepicture
+                    }
+                }
+                catch (error) {
+                    console.log(error)
+                }
+            }
+        }
+    })
+</script>
+<script src="components.js"></script>
+<script>app.mount("#featured-products")</script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</html>

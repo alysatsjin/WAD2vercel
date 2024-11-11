@@ -1,0 +1,44 @@
+{
+    "Bob Builder": {
+        "username": "@bobthebuilder",
+        "password": "pw1",
+        "email": "bobthebuilder@email.com",
+        "listings": [
+            "P1",
+            "P2"
+        ],
+        "bookings": [
+            "P3"
+        ],
+        "reviews": [
+            "review1",
+            "review2"
+        ],
+        "profilepicture": "profilepictures/Bob_the_builder.jpg"
+    },
+    "Mr Builder": {
+        "username": "@user2",
+        "password": "pw2",
+        "email": "user2@email.com",
+        "listings": [
+            "P3"
+        ],
+        "bookings": [],
+        "reviews": [
+            "review3"
+        ],
+        "profilepicture": ""
+    },
+    "Wendy Builder": {
+        "username": "@user3",
+        "password": "pw3",
+        "email": "user3@email.com",
+        "listings": [
+            "P4",
+            "P5"
+        ],
+        "bookings": [],
+        "reviews": [],
+        "profilepicture": "profilepictures/wendybuilder.jpeg"
+    }
+}

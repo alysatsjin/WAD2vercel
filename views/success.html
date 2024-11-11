@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RentMyTools | Shopping cart</title>
+
+    <!-- Required Links Here -->
+    <!-- Reactive Dependencies -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <!-- Firebase Dependencies -->
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore-compat.js"></script>
+    <!-- Styling Dependencies -->
+    <link rel="stylesheet" href="assets/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+</head>
+
+<body>
+    <div id="cart">
+        <nav-bar></nav-bar>
+        <div class="container">
+
+
+            <h1 class="mb-4">Payment Success</h1>
+
+            <!-- Cart Items -->
+            <div class="row mb-3">
+                <div class="col-lg-8" v-if='cartProducts.length>=1'>
+                    <!-- Cart Item 1 -->
+                    <!-- <div class="card mb-3" v-for="product in cartProducts"> -->
+                    <div class="card mb-3" v-for="(product,index) in cartProducts" :key="index">
+                        <!-- <div v-for="(value, key, index) in cartProducts" >
+                          {{ value }} - {{ index}}</div> -->
+                        <div class="row g-0">
+                            <div class="col-md-4 col-sm-4">
+                                <img v-bind:src="product[0]" class="img-fluid rounded-start cartproduct"
+                                    alt="Product Image">
+                            </div>
+                            <div class="col-md-8 col-sm-8">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{product[1]}}</h5>
+                                    <h5 class="card-text text-success">${{product[2]}} / day</h5>
+                                    <div class="d-flex align-items-center">
+                                        <p>Start date: <strong class="fs-5">{{product[3].slice(0, 10)}}</strong></p>
+                                    </div>
+                                    <div class=" d-flex align-items-center">
+                                        <p>End date: <strong class="fs-5">{{product[4].slice(0, 10)}}</strong></p>
+                                    </div>
+
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Cart Summary -->
+                <div class="col-lg-4" v-if='cartProducts.length>=1'>
+                    <div class="card">
+                        <div class="card-body">
+                            <h4 class="card-title">Payment Summary</h4>
+                            <ul class="list-group mb-3">
+                                <div v-for="(product,index) in cartProducts">
+                                    <li class="list-group-item d-flex justify-content-between lh-sm">
+                                        <div v-if='product[5]>=1' class="row my-0">
+                                            <h6 class="col-8">{{product[1]}} ({{product[5]}} day)</h6>
+                                            <span
+                                                class="text-muted col-4">${{(product[2]*product[5]).toFixed(2)}}</span>
+                                        </div>
+                                        <div v-else class="text-danger row my-0">
+                                            <h6 class="col-8">{{product[1]}} (-days)</h6>
+                                            <span class="col-4">Invalid Rental Period</span>
+                                        </div>
+                                    </li>
+                                </div>
+
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span class="col-8">Total (SGD)</span>
+                                    <strong class="col-4 ms-3">${{calculateTotal}}</strong>
+                                </li>
+
+
+                            </ul>
+                            <hr>
+
+                            <a href="index.html">
+                                <button class="btn btn-primary btn-lg w-100 mt-3">Return to Home</button>
+                            </a>
+
+                            <a href="profile.html?redirect=success">
+                                <button class="btn btn-primary btn-lg w-100 mt-3">Review all Bookings</button>
+                            </a>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <template-footer></template-footer>
+        </div>
+    </div>
+    <script src="firebaseFunctions.js"></script>
+    <script>
+
+        const app = Vue.createApp({
+            data() {
+
+                return {
+                    // Data Here
+                    cartProducts: [],
+                    total: 0,
+                    validCheckOut: "",
+                    loginUsername: ''
+                }
+            },
+
+            created() {
+                
+                // this.fetchUsername();
+                this.getProducts();
+            },
+
+            methods: {
+                // Functions Here
+                async getProducts() {
+                    const userId = sessionStorage['userId']; // Set your user ID here
+                    this.loginUsername = await getUsername(userId);
+                    const storedCartProducts = JSON.parse(localStorage.getItem('CartArr'));
+                    
+                    if (storedCartProducts) {
+                        for (let prod of storedCartProducts) {
+                            setBooking(prod[2], new Date(prod[3]), new Date(prod[4]), prod[0], prod[1], prod[7], prod[8], prod[6], sessionStorage['userId'], this.loginUsername)
+                        }
+                        this.cartProducts = storedCartProducts;
+                        this.validCheckOut = true
+                        localStorage.setItem('SummaryArr', JSON.stringify(storedCartProducts)); //set up localStorage for SummaryArr before checkout
+                        localStorage.removeItem('CartArr'); //can empty out CartArr once SummaryArr has copy of contents from CartArr
+                    } else {
+                        this.cartProducts = JSON.parse(localStorage.getItem('SummaryArr'));
+                    }
+                }, 
+            },
+
+
+
+            computed: {
+                calculateTotal() {
+                    this.total = 0
+                    // this.validCheckOut = true
+                    for (product of this.cartProducts) {
+                        let startDate = product[3]
+                        var allGood = true
+                        if (new Date(startDate) <= new Date()) {
+                            this.validCheckOut = false
+                            allGood = false
+                        }
+                        if (product[2] * product[5] <= 0) {
+                            this.validCheckOut = false
+                            allGood = false
+                        }
+                        this.total += product[2] * product[5]
+                    }
+                    if (allGood) {
+                        this.validCheckOut = true
+                        return this.total.toFixed(2)
+                    }
+                    return this.total = "Please Recheck Items"
+                },
+
+
+
+            }
+        })
+    </script>
+
+    <script src="components.js"></script>
+    <script>app.mount('#cart')</script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>

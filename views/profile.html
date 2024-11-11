@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RentMyTools | User Profile</title>
+
+    <!-- Required Links Here -->
+    <!-- Reactive Dependencies -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <!-- Firebase Dependencies -->
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore-compat.js"></script>
+    <!-- Styling Dependencies -->
+    <link rel="stylesheet" href="assets/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .profile-cover {
+            height: 200px;
+            background-image: url('https://mweb-cdn.karousell.com/build/profile-bg-0cfd0a9fd0.jpg');
+            background-size: cover;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .profile-info {
+            text-align: center;
+            margin-top: -120px;
+        }
+
+        .profile-info img {
+            border-radius: 50%;
+            width: 150px;
+            height: 150px;
+            border: 3px solid white;
+            background-color: white;
+            object-fit: contain
+        }
+
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation Bar -->
+    <div id="user-listed-products">
+        <nav-bar></nav-bar>
+
+        <!-- Page Header Section -->
+        <div class="container">
+            <div class="pageheader"></div>
+            <div class="row">
+                <div class="profile-info col-md-3">
+                    <img :src="userprofilepicture" alt="Avatar">
+                    <h4>{{username}}</h4>
+                    <p>{{userrating}} ⭐ ({{reviewcount}} reviews)</p>
+                    <!-- Only show if own profile -->
+                </div>
+            </div>
+            <div class="row">
+                <!-- Navigation Tabs -->
+
+                <div class="container mt-5">
+                    <ul class="nav nav-tabs w-100 justify-content-center text-center" id="myTab" role="tablist">
+                        <li class="nav-item" role="presentation" style="flex:1">
+                            <a class="nav-link active" id="listings-tab" data-bs-toggle="tab" href="#listings"
+                                role="tab" aria-controls="listings" aria-selected="true">Listings</a>
+                        </li>
+                        <li class="nav-item" role="presentation" style="flex:1" v-if="loginid == userid">
+                            <a class="nav-link" id="booking-tab" data-bs-toggle="tab" href="#booking" role="tab"
+                                aria-controls="booking" aria-selected="false">Bookings</a>
+                        </li>
+                        <li class="nav-item" role="presentation" style="flex:1" v-if="loginid == userid">
+                            <a class="nav-link" id="rental-tab" data-bs-toggle="tab" href="#rental" role="tab"
+                                aria-controls="rental" aria-selected="false">Rentals</a>
+                        </li>
+                        <li class="nav-item" role="presentation" style="flex:1">
+                            <a class="nav-link" id="reviews-tab" data-bs-toggle="tab" href="#reviews" role="tab"
+                                aria-controls="review" s aria-selected="false">Reviews</a>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="myTabContent">
+                        <div class="tab-pane fade show active" id="listings" role="tabpanel"
+                            aria-labelledby="listings-tab">
+                            <div class="container-fluid">
+                                <div class="row mt-2">
+                                    <div class="col-6">
+                                        <h2 class="p-2 ps-2 details-header">Your Listings</h2>
+                                    </div>
+                                    <div class="col-6 text-end">
+                                        <form action="newlisting.html">
+                                            <input type="hidden" name="ownerid" :value="userid">
+                                            <input type="hidden" name="ownerusername" :value="username">
+                                            <input type="submit" class="btn btn-success my-1" value="Add Listing"
+                                                v-if="loginid == userid">
+                                        </form>
+                                    </div>
+                                </div><!-- Only show once promise is returned -->
+                                <div class="mt-4">
+                                    <!-- Only show once promise is returned -->
+                                    <div class="row" v-if="userproducts.length  > 0">
+                                        <div class="col-lg-4 col-md-6 mb-4 d-flex" v-for="product in userproducts"
+                                            :key="product.id">
+                                            <div class="card product-card flex-fill d-flex flex-column">
+                                                <img :src="product.img" class="card-img-top">
+                                                <div class="card-body d-flex flex-column flex-grow-1">
+                                                    <h5 class="card-title">{{product.name}}</h5>
+                                                    <p class="card-text text-success fw-medium">${{product.price}} / day
+                                                    </p>
+                                                    <div class="mt-auto">
+                                                        <form action="product.html" class="row">
+                                                            <input type="hidden" name="productid" :value="product.id">
+                                                            <input type="submit" class="btn btn-primary my-1"
+                                                                value="View Product">
+                                                        </form>
+                                                        <form class="row" v-if="loginid == userid" action="editlisting.html" method="GET">
+                                                            <input type="hidden" name="productid" :value="product.id">
+                                                            <button type="submit" class="btn btn-secondary my-1">Update Listing</button>
+                                                        </form>
+                                                        <div class="row" v-if="loginid == userid">
+                                                            <input type="submit" class="btn btn-danger my-1"
+                                                                value="Remove" @click="removeListing(product.id)">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div v-else>
+                                        <h4>No Listings to Show</h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="booking" role="tabpanel" aria-labelledby="booking-tab">
+                            <div class="container-fluid">
+                                <h2 class="p-2 ps-2 details-header mt-2">Your Bookings</h2>
+                                <div class="mt-4">
+                                    <div class="row" v-if="userbookings.length">
+                                        <div class="col-lg-4 col-md-6 mb-4 d-flex" v-for="product in userbookings"
+                                            :key="product.productid">
+                                            <div class="card product-card flex-fill d-flex flex-column">
+                                                <img :src="product.img" class="card-img-top">
+                                                <div class="card-body d-flex flex-column flex-grow-1">
+                                                    <h5 class="card-title">{{product.name}}</h5>
+                                                    <div class="mt-auto">
+                                                        <form action="profile.html">
+                                                            <strong>Rented From:</strong>
+                                                            <button type="submit" class="btn text-primary btn-sm pb-2"
+                                                                :value="product.ownerid" name="user">
+                                                                <h5 class="fs-6 text-mute d-inline">
+                                                                    {{product.ownerusername}}
+                                                                </h5>
+                                                            </button>
+                                                        </form>
+                                                        <p class="card-text text-danger fw-medium">Rental Cost:
+                                                            ${{product.cost}}
+                                                        </p>
+                                                        <strong>Rental Period:</strong>
+                                                        <p>{{product.startdate}} - {{product.enddate}}</p>
+                                                    </div>
+                                                    <div>
+                                                        <form action="product.html" class="row">
+                                                            <input type="hidden" name="productid"
+                                                                :value="product.productid">
+                                                            <input type="submit" class="btn btn-primary my-1"
+                                                                value="View Product">
+                                                        </form>
+                                                        <div class="row">
+                                                            <!-- <input type="submit" class="btn btn-secondary my-1"
+                                                                value="Leave Review"
+                                                                @click="createReview(product.productid)"
+                                                                v-if="new Date(product.enddate) > new Date()"> -->
+
+                                                            <input type="submit" class="btn btn-danger my-1"
+                                                                value="Cancel Booking"
+                                                                @click="cancelBooking(product.bookingid)"
+                                                                v-if="new Date(product.enddate) > new Date()">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div v-else>
+                                        <h4>No Bookings to Show</h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="rental" role="tabpanel" aria-labelledby="rental-tab">
+
+                            <div class="container-fluid">
+                                <h2 class="p-2 ps-2 details-header mt-2">Items Rented Out</h2>
+                                <div class="mt-4">
+                                    <div class="row" v-if="userrentout.length">
+                                        <div class="col-lg-4 col-md-6 mb-4 d-flex" v-for="product in userrentout"
+                                            :key="product.productid">
+                                            <div class="card product-card flex-fill d-flex flex-column">
+                                                <img :src="product.img" class="card-img-top">
+                                                <div class="card-body d-flex flex-column flex-grow-1">
+                                                    <h5 class="card-title">{{product.name}}</h5>
+                                                    <div class="mt-auto">
+                                                        <form action="profile.html">
+                                                            <strong>Rented To:</strong>
+                                                            <button type="submit" class="btn text-primary btn-sm pb-2"
+                                                                :value="product.renterid" name="user">
+                                                                <h5 class="fs-6 text-mute d-inline">
+                                                                    {{product.renterusername}}
+                                                                </h5>
+                                                            </button>
+                                                        </form>
+                                                        <p class="card-text text-success fw-medium">Rental Revenue:
+                                                            ${{product.cost}}
+                                                        </p>
+                                                        <strong>Rental Period:</strong>
+                                                        <p>{{product.startdate}} - {{product.enddate}}</p>
+                                                    </div>
+                                                    <div>
+                                                        <form action="product.html" class="row">
+                                                            <input type="hidden" name="productid"
+                                                                :value="product.productid">
+                                                            <input type="submit" class="btn btn-primary my-1"
+                                                                value="View Product">
+                                                        </form>
+                                                        <div class="row" v-if="loginid == userid">
+                                                            <input type="submit" class="btn btn-danger my-1"
+                                                                value="Cancel Rental"
+                                                                @click="cancelBooking(product.bookingid)"
+                                                                v-if="new Date(product.startdate) > new Date()">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div v-else>
+                                        <h4>No Rented Items to Show</h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="reviews" role="tabpanel" aria-labelledby="review-tab">
+                            <div class="container-fluid">
+                                <div class="row mt-2">
+                                    <div>
+                                        <h2 class="p-2 ps-2 mt-2">Reviews</h2>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <div class="row" v-if="userreviews.length">
+                                        <div class="review mb-2 border rounded p-2 bg-white"
+                                            v-for="review in userreviews">
+                                            <h6>Review Date: {{review.date}}</h6>
+                                            <strong>Review By:</strong>
+                                            <form action="profile.html" class="d-inline">
+                                                <button type="submit" class="btn text-primary btn-sm pb-2"
+                                                    :value="review.reviewuser" name="user">
+                                                    <h5 class="fs-6 text-mute d-inline">{{review.reviewusername}}</h5>
+                                                </button>
+                                            </form>
+                                            <span class="text-muted" v-for="i in review.rating">⭐</span>
+                                            <p>{{review.review}}</p>
+                                        </div>
+                                    </div>
+                                    <div v-else>
+                                        <h4>No Reviews to Show</h4>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="toast fade show bg-success-subtle alert-message" role="alert" aria-live="assertive"
+                        aria-atomic="true" :style="{'display':successMessage}">
+                        <div class="toast-header">
+                            <button type="submit" class="btn-close ms-auto" data-bs-dismiss="toast" aria-label="Close"
+                                onclick="window.location.reload()"></button>
+                        </div>
+                        <div class="toast-body text-center">
+                            <h4 class="light text-success"><i class="fa-regular fa-circle-check"></i> Remove Success
+                            </h4>
+                            <p>{{resultMessage}}</p>
+                        </div>
+                    </div>
+                    <!-- Error Message -->
+                    <div class="toast fade show bg-success-subtle alert-message" role="alert" aria-live="assertive"
+                        aria-atomic="true" :style="{'display':successMessage}">
+                        <div class="toast-header">
+                            <button type="submit" class="btn-close ms-auto" data-bs-dismiss="toast" aria-label="Close"
+                                onclick="window.location.reload()"></button>
+                        </div>
+                        <div class="toast-body text-center">
+                            <h4 class="light text-success"><i class="fa-regular fa-circle-check"></i> Remove Success
+                            </h4>
+                            <p>{{resultMessage}}</p>
+                        </div>
+                    </div>
+                    <!-- Error Message -->
+                    <div class="toast fade show bg-danger-subtle alert-message" role="alert" aria-live="assertive"
+                        aria-atomic="true" :style="{'display':errorMessage}">
+                        <div class="toast-header">
+                            <button type="submit" class="btn-close ms-auto" @click="dismiss"
+                                aria-label="Close"></button>
+                        </div>
+                        <div class="toast-body text-center">
+                            <h4 class="light text-danger"><i class="fa-regular fa-circle-check"></i> Error Removing
+                                Listing!
+                            </h4>
+                            <p>{{resultMessage}}</p>
+                        </div>
+                    </div>
+                    <!-- Footer Section -->
+                    <template-footer></template-footer>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+<script src="firebaseFunctions.js"></script>
+<script>
+    const app = Vue.createApp({
+        data() {
+            return {
+                loginid: sessionStorage['userId'],            // To store login cache details
+                userid: "",
+                username: "",
+                userproductids: [],
+                userproducts: [],
+                userbookingids: [],
+                userbookings: [],
+                userrentout: [],
+                userreviewids: [],
+                userreviews: [],
+                userrating: 0,
+                reviewcount: 0,
+                userprofilepicture: "",
+                successMessage: "none",
+                errorMessage: "none",
+                resultMessage: "Test"
+            }
+        },
+
+        async created() {
+            this.getParameter()
+            await this.getUserInfo()
+            await this.productInformation()
+            await this.bookedProducts()
+            await this.userReviews()
+        },
+
+        async mounted() {
+            this.comeFromSuccessPage()
+        },
+
+        methods: {
+            getParameter() {
+                let params = new URLSearchParams(window.location.search);
+                // Can remove after creating login cache
+                if (params.get('user')) {
+                    return this.userid = params.get('user')
+                }
+                // Current Default Value TO BE CHANGED
+                else {
+                    return this.userid = sessionStorage['userId']
+                }
+
+            },
+
+            userRating() {
+                this.reviewcount = 0
+                if (this.userreviews.length == 0) {
+                    return 0
+                }
+                let totalRating = 0
+                for (review of this.userreviews) {
+                    totalRating += review.rating
+                    this.reviewcount++
+                }
+                this.userrating = totalRating / this.reviewcount
+            },
+
+            async getUserInfo() {
+                try {
+                    const userInfo = await getUser(this.userid)
+                    this.username = userInfo.username
+                    this.userproductids = userInfo.listings
+                    this.userbookingids = userInfo.bookings
+                    this.userreviewids = userInfo.reviews
+                    if (userInfo.profilepicture == "") {
+                        this.userprofilepicture = "https://firebasestorage.googleapis.com/v0/b/wad2-3b994.firebasestorage.app/o/profilePictures%2Fdefaultdp.jpg?alt=media&token=8079f217-e648-44c1-8ea9-b67e552cd76c"
+                    }
+                    else {
+                        this.userprofilepicture = userInfo.profilepicture
+                    }
+                }
+                catch (error) {
+                    console.log(error)
+                }
+            },
+
+            // Populate userproducts
+            async productInformation() {
+                const products = await getAllProducts();
+                // Wait for the products to be fetched
+                if (products) {
+                    for ([id, product] of Object.entries(products)) {
+                        if (this.userproductids.includes(id)) {
+                            this.userproducts.push({
+                                id: id,
+                                name: product.name,
+                                price: product.price,
+                                img: product.img
+                            })
+                        }
+                    }
+                }
+            },
+
+            // Populate userbookings
+            async bookedProducts() {
+                const bookings = await getAllBookings();
+                for ([id, product] of Object.entries(bookings)) {
+                    if (this.userbookingids.includes(id)) {
+                        this.userbookings.push({
+                            bookingid: id,
+                            productid: product.productid,
+                            ownerid: product.ownerid,
+                            ownerusername: product.ownerusername,
+                            renterid: product.renterid,
+                            renterusername: product.renterusername,
+                            name: product.name,
+                            cost: product.cost,
+                            startdate: formatDate(product.startdate.toDate()),
+                            enddate: formatDate(product.enddate.toDate()),
+                            img: product.img
+                        })
+                    }
+                    else if (this.userproductids.includes(product.productid)) {
+                        this.userrentout.push({
+                            bookingid: id,
+                            productid: product.productid,
+                            ownerid: product.ownerid,
+                            ownerusername: product.ownerusername,
+                            renterid: product.renterid,
+                            renterusername: product.renterusername,
+                            name: product.name,
+                            cost: product.cost,
+                            startdate: formatDate(product.startdate.toDate()),
+                            enddate: formatDate(product.enddate.toDate()),
+                            img: product.img
+                        })
+                    }
+                }
+            },
+
+            // Populate userreviews
+            async userReviews() {
+                const reviews = await getAllReviews();
+                for (reviewObject in reviews) {
+                    if (this.userreviewids.includes(reviewObject)) {
+                        // Convert firebase date object to DD-MMM-YYYY format
+                        // formatDate function within firebaseFunctions.js
+                        reviews[reviewObject].date = formatDate(reviews[reviewObject].date.toDate())
+                        this.userreviews.push(reviews[reviewObject])
+                    }
+                }
+                this.userRating()
+            },
+
+            async removeListing(productid) {
+                await deleteProduct(productid)
+                    .then((status) => {
+                        this.successMessage = ""
+                        this.resultMessage = status
+                    })
+                    .catch((error) => {
+                        this.errorMessage = ""
+                        this.resultMessage = error
+                    })
+            },
+
+            cancelBooking(productid) {
+                // To link with database and 
+                // 1. cancel booking under userbooking
+                // 2. remove from booking collection
+                deleteBooking(productid)
+            },
+
+            createReview(productid) {
+                // To Do
+                console.log("Leave a review tbc")
+            },
+
+            dismiss() {
+                this.errorMessage = "none"
+            },
+
+            comeFromSuccessPage() {
+                let params = new URLSearchParams(window.location.search);
+
+                // Activate the Booking tab if coming from success.html
+                if (params.get('redirect') === 'success') {
+                    document.getElementById('booking-tab').classList.add('active');
+                    document.getElementById('booking-tab').setAttribute('aria-selected', 'true');
+                    document.getElementById('listings-tab').classList.remove('active');
+                    document.getElementById('listings-tab').setAttribute('aria-selected', 'false');
+
+                    // Show Booking content and hide Listings content
+                    document.getElementById('booking').classList.add('show', 'active');
+                    document.getElementById('listings').classList.remove('show', 'active');
+                }
+            }
+        }
+    })
+</script>
+<script src="components.js"></script>
+<script>app.mount("#user-listed-products")</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</html>

@@ -1,0 +1,20 @@
+{
+    "review1": {
+        "reviewuser": "user2",
+        "review": "The transaction was exceptional. I had a few questions about the product, and owner responded promptly and courteously. Overall, I highly recommend the Bob Builder to anyone looking for a pleasant transaction",
+        "date": "October 18, 2024",
+        "rating": 5
+    },
+    "review2": {
+        "reviewuser": "user2",
+        "review": "Great transaction",
+        "date": "November 18, 2024",
+        "rating": 2
+    },
+    "review3": {
+        "reviewuser": "Bob Builder",
+        "review": "Wonderful",
+        "date": "May 18, 2024",
+        "rating": 3
+    }
+}

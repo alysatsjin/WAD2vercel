@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>RentMyTool | Edit Listing</title>
+
+    <!-- Required Links Here -->
+    <!-- Reactive Dependencies -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <!-- Firebase Dependencies -->
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore-compat.js"></script>
+    <!-- Styling Dependencies -->
+    <link rel="stylesheet" href="assets/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <!-- For location information -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+
+    <!-- js Files -->
+    <script type="module" src="firebaseAuthentication.js"></script>
+    <script src="firebaseFunctions.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+</head>
+
+<style>
+    #videoUpload {
+        position: relative
+    }
+
+    #videoUpload img {
+        border: solid 1px lightgrey;
+        border-radius: 25px;
+        background-color: white;
+        width: auto;
+        height: 400px;
+        position: absolute;
+        left: 300px;
+        bottom: 50px;
+        z-index: 10;
+    }
+</style>
+
+<body>
+    <div id="new-listing">
+        <nav-bar></nav-bar>
+        <div class="container mt-5">
+            <h2 class="text-center">Upload Your Product</h2>
+
+
+            <!-- Product Name -->
+            <div class="my-3">
+                <label for="productName">Product Name:</label>
+                <input type="text" class="form-control" id="productName" v-model="productName" required>
+            </div>
+            <!-- Product Features -->
+            <div class="row">
+                <div class="col-lg-6 col-xl-4">
+                    <div class="mb-1">Features <span class="text-danger">(Max 5)</span>:</div>
+                    <div class="row">
+                        <div class="col-8 col-md-auto">
+                            <input type="text" class="mb-2 form-control" v-model="productFeatures[0]"
+                                list="featureOptions" placeholder="e.g. Screwdriver" required>
+                        </div>
+                        <div class="col-4 col-md-auto">
+                            <input class="ms-2 form-control" type="number" v-model="featureCount" id="featureCount"
+                                min="1" max="5" @change="extraFeatures">
+                        </div>
+                    </div>
+                    <!-- Populate if  -->
+                    <span v-if="featureCount > 5" class="ms-2 fw-medium text-danger">Only allowed top 5 related
+                        features</span>
+                    <div v-for="i in extraFeatures()" class="row">
+                        <div class="col-auto">
+                            <input type="text" class="mb-2 form-control" v-model="productFeatures[i]"
+                                list="featureOptions">
+                        </div>
+                    </div>
+                </div>
+
+                <datalist id="featureOptions">
+                    <option v-for="feature in exampleFeatures" :value="feature">
+                </datalist>
+
+                <!-- Product Tasks -->
+                <div class="col-lg-6 col-xl-4">
+                    <div class="mb-1">Tasks <span class="text-danger">(Max 5)</span>:</div>
+                    <div class="row">
+                        <div class="col-8 col-md-auto">
+                            <input type="text" class="mb-2 form-control" v-model="productTasks[0]" list="taskOptions"
+                                placeholder="e.g. Cleaning" required>
+                        </div>
+                        <div class="col-4 col-md-auto">
+                            <input class="ms-2 form-control" type="number" v-model="taskCount" id="taskCount" min="1"
+                                max="5" @change="extraTasks">
+                        </div>
+                    </div>
+                    <!-- Populate if  -->
+                    <span v-if="taskCount > 5" class="ms-2 fw-medium text-danger">Only allowed top 5 related
+                        tasks</span>
+                    <div v-for="i in extraTasks()" class="row">
+                        <div class="col-auto">
+                            <input type="text" class="mb-2 form-control" v-model="productTasks[i]" list="taskOptions">
+                        </div>
+                    </div>
+                </div>
+
+                <datalist id="taskOptions">
+                    <option v-for="task in exampleTasks" :value="task">
+                </datalist>
+            </div>
+
+            <!-- Rental Rate -->
+            <div>
+                <label for="productPrice" class="my-1">Price / Day:</label>
+                <div class="input-group mb-3">
+                    <span class="input-group-text">$</span>
+                    <input type="number" id="productPrice" v-model="productPrice" class="rounded-1 border-light"
+                        required>
+                </div>
+            </div>
+
+            <!-- Location Input -->
+            <div class="my-2 mb-3">
+                <label for="productLocation" class="my-1">Location:</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="productLocation" placeholder="Enter your location"
+                        v-model="productLocation" required :disabled="productLat != '' && productLong != ''">
+                    <button class="btn btn-outline-primary col-12 col-sm-2" type="button"
+                        @click="getLocationFromInput">Check Valid
+                        Address</button>
+                    <button class="btn btn-outline-primary col-12 col-sm-2" type="button"
+                        @click="getCurrentLocation">Get Current
+                        Location <i class="fa-solid fa-location-dot"></i></button>
+                </div>
+                <p v-if="productLat != '' && productLong != ''" class="text-success fw-medium">Valid Address
+                    Captured. Pick Up Location @ {{productLocation}}
+                </p>
+                <p v-else class="text-warning fw-medium">Missing Location Information</p>
+            </div>
+
+            <!-- Upload Image -->
+            <div class="my-2">
+                <div class="my-1">Upload Image:</div>
+                <div class="input-group">
+                    <input type="file" class="form-control" id="newImage" accept=".jpg, .jpeg, .png"
+                        @change="contentUploaded" required>
+                </div>
+            </div>
+            <!-- Currently Uploaded File -->
+            <div class="my-2">
+                <div class="my-1">Currently Uploaded Image:</div>
+                <div class="input-group">
+                    <input type="text" class="form-control" :value="productImage">
+                </div>
+                <img :src="productImage" class="w-25 h-25">
+            </div>
+
+            <!-- Video Tutorial Link-->
+            <div class="my-2" id="videoUpload">
+                <div class="my-3">Provide Youtube Tutorial Embed Link:
+                    <i class="fa fa-circle-info" @mouseover="showGuide" @mouseout="showGuide"></i>
+                </div>
+                <img v-if="videoUploadGuide" :src="videoUploadGuide">
+                <div class="input-group">
+                    <input type="url" class="form-control" id="productVideo" v-model="inputVideoLink" required>
+                </div>
+
+                <!-- Message to Show Video Link Verification Results -->
+                <p v-if="newVideoLink != '' && inputVideoLink != originalVideoLink" class="ms-2 fw-medium text-warning">{{newVideoLink}}</p>
+                <p v-else-if="inputVideoLink == '' || productVideoLink == originalVideoLink"></p>
+                <p v-else class="ms-2 fw-medium text-success">New Link Successful!</p>
+                {{productVideoLink}}
+
+                <!-- <p v-else-if="inputVideoLink != '' && productVideoLink !=''" class="ms-2 fw-medium text-success">
+                    Link
+                    Successful!</p>
+                <p v-else class="ms-2 fw-medium text-danger">Provided Link is Invalid</p> -->
+
+            </div>
+
+            <!-- Upload New Listing Button -->
+            <div class="text-center">
+                <button type="submit" class="btn btn-lg btn-success mt-3" @click="updateListing"
+                    :disabled="!(disableListing)">Upload New Listing</button>
+
+            </div>
+
+            <!-- Success Message -->
+            <div class="toast fade show bg-success-subtle alert-message" role="alert" aria-live="assertive"
+                aria-atomic="true" :style="{'display':successMessage}">
+                <div class="toast-header">
+                    <button type="submit" class="btn-close ms-auto" data-bs-dismiss="toast" aria-label="Close"
+                        onclick="window.location.reload()"></button>
+                </div>
+                <div class="toast-body text-center">
+                    <h4 class="light text-success"><i class="fa-regular fa-circle-check"></i> New
+                        Listing Success! </h4>
+                    <p>Successfully Added {{productName}}</p>
+                    <form action="profile.html">
+                        <input type="hidden" name="user" :value="ownerid">
+                        <button type="submit" class="btn btn-primary">Back to Profile Page</button>
+                    </form>
+                </div>
+            </div>
+            <!-- Error Message -->
+            <div class="toast fade show bg-danger-subtle alert-message" role="alert" aria-live="assertive"
+                aria-atomic="true" :style="{'display':errorMessage}">
+                <div class="toast-header">
+                    <button type="submit" class="btn-close ms-auto" aria-label="Close" @click="dismiss"></button>
+                </div>
+                <div class="toast-body text-center">
+                    <h4 class="light text-danger"><i class="fa-regular fa-circle-check"></i> Error
+                        Creating New Listing!</h4>
+                    <p>{{errorCode}}</p>
+                    <form action="profile.html">
+                        <input type="hidden" name="user" :value="ownerid">
+                        <button type="submit" class="btn btn-primary">Back to Profile Page</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <template-footer></template-footer>
+    </div>
+</body>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    const app = Vue.createApp({
+        data() {
+            return {
+                ownerid: "",
+                ownerusername: "",
+                productName: "",
+                productFeatures: [],
+                exampleFeatures: ['Screwdriver', "Lightweight", "Vacuum", "Drill", "Cordless"],
+                featureCount: 1,
+                productTasks: [],
+                taskCount: 1,
+                exampleTasks: ["Cleaning", "Vacuum"],
+                productPrice: 0,
+                productLat: "",
+                productLong: "",
+                productLocation: "",
+                productImage: "",
+                inputVideoLink: "",     // Given embedded link, cleaned with computed function productVideoLink()
+                videoUploadGuide: "",   // Reactive image that appears and disappears when user hover over i button
+                successMessage: "none",
+                errorMessage: "none",
+                errorCode: "Bad",
+
+                productid: "",
+                newImage: "",
+                originalVideoLink: "",
+                newVideoLink: "",
+            }
+        },
+
+        async created() {
+            await this.getParameter()
+            await this.getProductInformation()
+        },
+
+        methods: {
+            getParameter() {
+                const params = new URLSearchParams(window.location.search);
+                this.productid = params.get('productid');
+            },
+
+            contentUploaded(event) {
+                this[event.target.id] = event.target.files[0]
+            },
+
+            extraFeatures() {
+                if (this.featureCount <= 5) {
+                    return this.featureCount - 1
+                }
+                return 4
+            },
+
+            extraTasks() {
+                if (this.taskCount <= 5) {
+                    return this.taskCount - 1
+                }
+                return 4
+            },
+
+            getLocationFromInput() {
+                getLatLong(this.productLocation)
+                    .then(response => {
+                        this.productLat = response[0]
+                        this.productLong = response[1]
+                        this.productLocation = response[2]
+                    })
+                    .catch(error => {
+                        this.errorMessage = "",
+                            this.errorCode = error
+                        this.productLocation = ""
+                        this.productLat = ""
+                        this.productLong = ""
+                    })
+            },
+
+            getCurrentLocation() {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(this.showPosition)
+                }
+                else {
+                    this.productLocation = "Unable to get location"
+                }
+            },
+
+            showPosition(position) {
+                //  To add function here to update this.productLocation using lat and long information
+                getLocationName(position.coords.latitude, position.coords.longitude)
+                    .then(response => {
+                        this.productLat = position.coords.latitude
+                        this.productLong = position.coords.longitude
+                        this.productLocation = response
+                    })
+                    .catch(error => {
+                        this.errorMessage = "",
+                            this.errorCode = error
+                    })
+            },
+
+            async getProductInformation() {
+                try {
+                    const productinformation = await getProduct(this.productid)
+                    if (productinformation) {
+                        this.ownerid = productinformation.ownerid
+                        this.ownerusername = productinformation.ownerusername
+                        this.productName = productinformation.name
+                        for (feature of productinformation.features) {
+                            this.productFeatures.push(capitalizeWords(feature))
+                        }
+                        for (task of productinformation.tasks) {
+                            this.productTasks.push(capitalizeWords(task))
+                        }
+                        this.productPrice = productinformation.price
+                        this.productLat = productinformation.coordinates.latitude
+                        this.productLong = productinformation.coordinates.longditude
+                        this.productLocation = productinformation.location
+                        this.productImage = productinformation.img
+                        this.inputVideoLink = productinformation.video
+                        this.originalVideoLink = productinformation.video
+                    }
+                }
+                catch (error) {
+                    console.log("Error:", error)
+                }
+            },
+
+            async updateListing() {
+                // To connect to database and add new entry
+                var downloadURL = this.productImage
+                if (this.newImage != "") {
+                    firebase.initializeApp(firebaseConfig);
+                    const storage = firebase.storage()
+
+                    const storageRef = firebase.storage().ref('listingImages/' + this.newImage.name);
+                    // const storageRef = firebase.storage().ref(profilePictures/${file.name});
+                    await storageRef.put(this.newImage);
+                    downloadURL = await storageRef.getDownloadURL();
+                }
+
+                await updateProduct(this.productid, this.productLat, this.productLong, this.productFeatures, downloadURL, this.productLocation, this.productName, this.ownerid, this.ownerusername, this.productPrice, this.productTasks, this.productVideoLink)
+                    .then(status => {
+                        this.successMessage = ""
+                        this.errorCode = status
+                    })
+                    .catch(error => {
+                        this.errorMessage = ""
+                        this.errorCode = error
+                    })
+            },
+
+            showGuide() {
+                if (this.videoUploadGuide == "") {
+                    this.videoUploadGuide = "assets/img/UploadVideoGuide.png"
+                }
+                else {
+                    this.videoUploadGuide = ""
+                }
+            },
+
+            dismiss() {
+                this.errorMessage = "none"
+            }
+        },
+
+        computed: {
+            disableListing() {
+                if (this.productName == "" || this.productFeatures.length == 0 || this.productTasks.length == 0 ||
+                    this.productPrice == 0 || this.productLat == "" || this.productLat == "" || this.productLocation == "" ||
+                    this.productVideoLink == "") {
+                    return false
+                }
+                return true
+            },
+
+            productVideoLink() {
+                this.newVideoLink = ""
+                if (this.inputVideoLink == this.originalVideoLink) {
+                    return this.originalVideoLink
+                }
+                else {
+                    let embedElements = this.inputVideoLink.split(" ")
+                    for (ele of embedElements) {
+                        if (ele.includes("www.youtube.com") && ele.includes("src=\"")) {
+                            let sliceStartIndex = ele.indexOf("\"")
+                            return ele.slice(sliceStartIndex).replaceAll("\"", "")
+                        }
+                    }
+                }
+                this.newVideoLink = "Invalid Video Link Provided. Original Link will be used"
+                return this.originalVideoLink
+            }
+        }
+    })
+
+</script>
+<script src="components.js"></script>
+<script>app.mount('#new-listing')</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</html>

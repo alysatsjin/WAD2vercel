@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>RentMyTool | Product Page</title>
+
+    <!-- Required Links Here -->
+    <!-- Reactive Dependencies -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <!-- Firebase Dependencies -->
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore-compat.js"></script>
+    <!-- Styling Dependencies -->
+    <link rel="stylesheet" href="assets/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <!-- For Calendar -->
+    <link href="https://code.jquery.com/ui/1.9.2/themes/smoothness/jquery-ui.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-1.8.3.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.9.2/jquery-ui.js"></script>
+
+</head>
+
+<body>
+    <!-- Navigation Bar -->
+
+    <div id="product-details">
+        <nav-bar></nav-bar>
+
+        <!-- Product Detail Section -->
+        <div class="container mt-5">
+            <div class="row">
+                <!-- Product Image -->
+                <div class="col-md-6">
+                    <img :src="productimg" alt="Product Image" class="product-image img-fluid mb-3">
+                </div>
+
+                <!-- Product Details -->
+                <div class="col-md-6">
+                    <h2>{{productname}}</h2>
+                    <form action="profile.html" method="get">
+                        Listed By:
+                        <button type="submit" class="btn text-primary btn-sm pb-2" :value="ownerid" name="user">
+                            <h5 class="text-mute d-inline">{{productowner}}</h5>
+                        </button>
+                    </form>
+                    <p class="text-muted">Tasks:
+                        <span v-for="(task,index) in producttasks">
+                            <a href="#">{{task}}</a>
+                            <span v-if="index+1 != producttasks.length">,&nbsp;</span>
+                        </span>
+                    </p>
+                    <p class="text-muted d-inline">Features:
+                        <span v-for="(features,index) in productfeatures">
+                            <a :href="'searchProducts.html?toolsearch='+features">{{features}}</a>
+                            <span v-if="index+1 != productfeatures.length">,&nbsp;</span>
+                        </span>
+                    </p>
+                    <h4 class="text-success mt-2">${{productprice}} / day</h4>
+
+                    <!-- Quantity Selector -->
+                    <div class="my-3 row" v-if="loginid != ownerid">
+                        <div class="col-md-6">
+                            Start Date: <input type="text" class="form-control" id="startdate" name="startdate"
+                                required>
+                        </div>
+                        <div class="col-md-6">
+                            Return Date: <input type="text" class="form-control" id="returndate" name="returndate"
+                                required>
+                        </div>
+                    </div>
+
+                    <!-- Warning Messages -->
+                    <p v-if="dateConflict" class="text-danger">Conflicts with Existing Booking Dates</p>
+
+                    <!-- Add to Cart Button -->
+                    <form @submit.prevent="addToCart" method="GET" v-if="loginid != ownerid">
+                        <button class="btn btn-primary " type="submit" :disabled="buttonIsDisabled">Add to Cart</button>
+                    </form>
+                    <form action="editlisting.html" method="GET" v-if="loginid == ownerid" class="mt-auto">
+                        <input type="hidden" name="productid" :value="productid">
+                        <button class="btn btn-secondary" type="submit">Edit Listing</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Success Message -->
+            <div class="toast fade show bg-success-subtle alert-message" role="alert" aria-live="assertive"
+                aria-atomic="true" :style="{'display':successMessage}">
+                <div class="toast-header">
+                    <button type="submit" class="btn-close ms-auto" data-bs-dismiss="toast" @click="dismiss"
+                        aria-label="Close"></button>
+                </div>
+                <div class="toast-body text-center">
+                    <p>Successfully Added to Cart</p>
+                    <form action="cart.html">
+                        <button type="submit" class="btn btn-primary">Checkout!</button>
+                    </form>
+                </div>
+            </div>
+            <!-- Error Message -->
+            <div class="toast fade show bg-danger-subtle alert-message" role="alert" aria-live="assertive"
+                aria-atomic="true" :style="{'display':errorMessage}">
+                <div class="toast-header">
+                    <button type="submit" class="btn-close ms-auto" data-bs-dismiss="toast" aria-label="Close"
+                        onclick="window.location.reload()"></button>
+                </div>
+                <div class="toast-body text-center">
+                    <p>Item Already Added to Cart for Selected Period</p>
+                </div>
+            </div>
+
+            <!-- Customer Reviews -->
+            <hr />
+            <div v-if="productreviews.length > 0">
+                <h5>Customer Reviews</h5>
+                <div class="review mb-2 border rounded p-2" v-for="review in productreviews">
+                    <h6>Review Date: {{review.date}}</h6>
+                    <strong>Review By:</strong>
+                    <form action="profile.html" class="d-inline">
+                        <button type="submit" class="btn text-primary btn-sm pb-2" :value="review.reviewuser"
+                            name="user">
+                            <h5 class="fs-6 text-mute d-inline">{{review.reviewusername}}</h5>
+                        </button>
+                    </form>
+                    <span class="text-muted" v-for="i in review.rating">⭐</span>
+                    <p>{{review.review}}</p>
+                </div>
+            </div>
+            <div v-else class="my-5">
+                <h5>No Reviews Yet</h5>
+            </div>
+
+            <!-- Tutorial Video -->
+            <hr />
+            <div v-if="productvideo.length > 0">
+                <h5>Tutorial Video</h5>
+                <iframe width="560" height="315" :src="productvideo" frameborder="0" allowfullscreen></iframe>
+            </div>
+            <div v-else class="my-5">
+                <h5>Tutorial Video Coming Soon!</h5>
+            </div>
+        </div>
+
+
+        <!-- Related Products Section -->
+        <hr />
+        <div class="container mt-2">
+            <h3 class="text-center mb-4">You May Also Like:</h3>
+            <div class="row" v-if="Object.keys(relatedproducts).length > 0">
+                <div class="col-xl-3 col-lg-6 mb-4 d-flex" v-for="product in relatedProductsSlice" :key="product.id">
+                    <form action="product.html" method="GET" class="d-flex flex-fill">
+                        <label class="card product-card flex-fill" style="cursor: pointer;">
+                            <img :src="product.img" class="card-img-top">
+                            <div class="card-body">
+                                <h5 class="card-title">{{product.name}}</h5>
+                                <h5 class="card-text text-success">${{product.price}} / day<h5>
+                                        <input type="hidden" name="productid" :value="product.id">
+                                        <input type="submit" class="btn btn-primary view-product mb-1"
+                                            value="View Product" name="view">
+                            </div>
+                        </label>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <template-footer></template-footer>
+    </div>
+</body>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="firebaseFunctions.js"></script>
+
+<script>
+    const app = Vue.createApp({
+        data() {
+            return {
+                loginid: sessionStorage['userId'],
+                loginUsername: '',
+                productid: "",
+                productname: "",
+                productfeatures: [],
+                producttasks: [],
+                productprice: "",
+                productlocation: "",
+                productimg: "",
+                productowner: "",
+                ownerid: "",
+                ownerprofilepage: "",
+                productreviewids: [],
+                productreviews: [],
+                productvideo: "",
+                relatedproducts: [],
+                startDate: "",
+                returnDate: "",
+                unavailabledates: [],
+                actionURL: '',
+                // Status Messages
+                successMessage: 'none',
+                errorMessage: 'none',
+                dateConflict: false
+            }
+        },
+
+        created() {
+            this.getParameter()
+            this.getProductInformation()
+            this.getReviews()
+            this.getRelatedProducts()
+            this.getUnavailableDates()
+        },
+
+        methods: {
+            // Extract GET request from URL
+            getParameter() {
+                const params = new URLSearchParams(window.location.search);
+                return this.productid = params.get('productid');
+            },
+
+            async getProductInformation() {
+                try {
+                    const productinformation = await getProduct(this.productid)
+                    if (productinformation) {
+                        this.productname = productinformation.name
+                        for (feature of productinformation.features) {
+                            this.productfeatures.push(capitalizeWords(feature))
+                        }
+                        for (task of productinformation.tasks) {
+                            this.producttasks.push(capitalizeWords(task))
+                        }
+                        this.productprice = productinformation.price
+                        this.productlocation = productinformation.location
+                        this.productimg = productinformation.img
+                        this.productowner = productinformation.ownerusername
+                        this.ownerid = productinformation.ownerid
+                        this.productreviewids = productinformation.reviews
+                        this.productvideo = productinformation.video
+                    }
+                }
+                catch (error) {
+                    console.log("Error:", error)
+                }
+            },
+
+            async getReviews() {
+                try {
+                    const allReviews = await getAllReviews()
+                    if (allReviews) {
+                        for ([id, reviewdetails] of Object.entries(allReviews)) {
+                            if (this.productreviewids.includes(id)) {
+                                this.productreviews.push(
+                                    {
+                                        reviewuser: reviewdetails.reviewuser,
+                                        reviewusername: reviewdetails.reviewusername,
+                                        date: formatDate(reviewdetails.date.toDate()),
+                                        review: reviewdetails.review,
+                                        rating: reviewdetails.rating
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+                catch (error) {
+                    console.log("Error:", error)
+                }
+            },
+
+            async getRelatedProducts() {
+                const allProducts = await getAllProducts();
+                for (let [id, product] of Object.entries(allProducts)) {
+                    if (id == this.productid) {
+                        continue
+                    }
+                    else {
+                        let alreadyAdded = false
+                        for (feature of product.features) {
+                            feature = capitalizeWords(feature)
+                            if (this.productfeatures.includes(feature)) {
+                                this.relatedproducts.push({
+                                    id: id,
+                                    name: product.name,
+                                    price: product.price,
+                                    img: product.img
+                                })
+                                alreadyAdded = true
+                                break
+                            }
+                        }
+                        if (alreadyAdded) {
+                            continue
+                        }
+                        else {
+                            for (task of product.tasks) {
+                                task = capitalizeWords(task)
+                                if (this.producttasks.includes(task)) {
+                                    this.relatedproducts.push({
+                                        id: id,
+                                        name: product.name,
+                                        price: product.price,
+                                        img: product.img
+                                    })
+                                    break
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+
+            getDatesArray(startDateTimestamp, endDateTimestamp, target) {
+                // const startDate = startDateTimestamp.toDate();
+                // const endDate = endDateTimestamp.toDate();
+
+                // Create an array to hold the dates
+
+                // Use a loop to iterate through the date range
+                let currentDate = new Date(startDateTimestamp);
+                while (currentDate <= endDateTimestamp) {
+                    // Push a formatted date string (or Date object) into the array
+                    target.push(formatDate(new Date(currentDate)))
+                    // Increment the current date by one day
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+                return target
+            },
+
+            async getUnavailableDates() {
+                const allBookings = await getAllBookings()
+                for (let [id, product] of Object.entries(allBookings)) {
+                    if (product.productid == this.productid) {
+                        startDate = product.startdate.toDate()
+                        endDate = product.enddate.toDate()
+                        this.getDatesArray(startDate, endDate, this.unavailabledates)
+                    }
+                }
+            },
+
+            
+            addToCart() {
+                let cartArr = []
+                let jsonString = ''
+                if (localStorage.getItem('CartArr') === null || localStorage.getItem('CartArr') === "{}") {
+                    // Initialize the cart with the first product
+                    const startDate = this.startDate;
+                    const endDate = this.returnDate;
+                    const diffInDays = (endDate - startDate) / (1000 * 60 * 60 * 24)
+                    cartArr = [[this.productimg, this.productname, this.productprice, this.startDate, this.returnDate, diffInDays, this.productid, this.ownerid, this.productowner]];
+                } else {
+                    // Parse existing cart array from localStorage
+                    cartArr = JSON.parse(localStorage.getItem('CartArr'));
+                    const startDate = this.startDate;
+                    const endDate = this.returnDate;
+                    const diffInDays = (endDate - startDate) / (1000 * 60 * 60 * 24)
+                    let requestedRentalPeriod = this.rentalPeriod(this.startDate, this.returnDate)
+                    // Check if duplicate order exists
+                    let isDuplicate = false
+                    for (item of cartArr) {
+                        // Check if item already in cart
+                        if (item[6] == this.productid) {
+                            let cartRentalPeriod = this.rentalPeriod(new Date(item[3]), new Date(item[4]))
+                            // Check if there is a conflict in booking dates
+                            for (date of requestedRentalPeriod) {
+                                if (cartRentalPeriod.includes(date)) {
+                                    isDuplicate = true
+                                    break
+                                }
+                            }
+                            if (isDuplicate) {
+                                return this.errorMessage = ''
+                            }
+                        }
+                    }
+                    if (isDuplicate) {
+                        this.errorMessage = ''
+                    }
+                    // Add new item to the cart
+                    else {
+                        cartArr.push([this.productimg, this.productname, this.productprice, this.startDate, this.returnDate, diffInDays, this.productid, this.ownerid, this.productowner]);
+                        this.successMessage = ''
+                    }
+                }
+                // // Update localStorage with the modified cart array
+                jsonString = JSON.stringify(cartArr);
+                localStorage.setItem('CartArr', jsonString);
+                // window.location.href = 'cart.html'
+            },
+
+            rentalPeriod(startDate, returnDate) {
+                let rentalPeriod = []
+                rentalPeriod = this.getDatesArray(startDate, returnDate, rentalPeriod)
+                return rentalPeriod
+            },
+
+            dismiss() {
+                this.errorMessage = "none"
+                console.log(this.errorMessage)
+            }
+
+        },
+
+        computed: {
+
+            buttonIsDisabled() {
+                if (this.startDate == "" || this.returnDate == "") {
+                    return true
+                }
+                this.dateConflict = false
+                let rentalPeriod = this.rentalPeriod(this.startDate, this.returnDate)
+                for (date of rentalPeriod) {
+                    if (this.unavailabledates.includes(date)) {
+                        this.dateConflict = true
+                        return true
+                    }
+                }
+                return false
+            },
+
+            relatedProductsSlice() {
+                return Object.values(this.relatedproducts).slice(0, 4);
+            },
+        },
+
+        mounted() {
+            var array = this.unavailabledates
+            const vm = this;
+            $("#startdate").datepicker({
+                onSelect(dateText) {
+                    vm.startDate = new Date(dateText)
+                    $("#returndate").datepicker("option", "minDate", new Date(+new Date(vm.startDate) + 86400000))
+                },
+                minDate: 1,
+                beforeShowDay: function (date) {
+                    var string = jQuery.datepicker.formatDate('M dd yy', date);
+                    return [array.indexOf(string) == -1]
+                }
+            })
+            $("#returndate").datepicker({
+                onSelect(dateText) {
+                    vm.returnDate = new Date(dateText)
+                },
+                beforeShowDay: function (date) {
+                    var string = jQuery.datepicker.formatDate('M dd yy', date);
+                    return [array.indexOf(string) == -1]
+                },
+                minDate: 1
+            })
+        },
+
+        // watch: {
+        //     startDate(newVal,oldVal){
+        //         this.rentalPeriod()
+        //     },
+        //     returnDate(newVal,oldVal){
+        //         this.rentalPeriod()
+        //     }
+        // }
+    })
+</script>
+<script src="components.js"></script>
+<script>app.mount('#product-details')</script>
+
+</body>
+
+</html>
