@@ -11,7 +11,7 @@ app.set('view engine', 'ejs')
 app.use(express.static(path.join(__dirname, '../public')));
 
 app.use(cors({
-    origin: 'https://your-frontend.vercel.app', // Allow your frontend URL
+    origin: 'https://wad2-vercel.vercel.app/', // Allow your frontend URL
     methods: 'GET, POST, PUT, DELETE, OPTIONS',
     credentials: true // Include if you need to allow cookies
 }));
