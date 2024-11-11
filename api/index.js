@@ -8,7 +8,7 @@ const app = express()
 var path = require('path')
 app.set('view engine', 'ejs')
 
-app.use(express.static('views'));
+app.use(express.static('public'));
 
 app.use(cors({
     //origin: 'http://localhost:3001', // Allow your frontend URL rawr
@@ -20,7 +20,7 @@ app.use(cors({
 app.use(express.json());
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views/home.html'));
+    res.sendFile(path.join(__dirname, '../public/home.html'));
 });
 
 app.post('/checkout', async (req, res) => {

@@ -5,9 +5,5 @@
   ],
   "routes": [
     { "src": "/(.*)", "dest": "/api/index.js" }
-  ],
-  "static": {
-    "src": "views",
-    "dest": "/views"
-  }
+  ]
 }
