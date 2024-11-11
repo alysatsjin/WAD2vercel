@@ -11,7 +11,8 @@ app.set('view engine', 'ejs')
 app.use(express.static('views'));
 
 app.use(cors({
-    origin: 'http://localhost:3001', // Allow your frontend URL
+    //origin: 'http://localhost:3001', // Allow your frontend URL
+    origin: 'wad2-vercel-ruddy.vercel.app',
     methods: 'GET, POST, PUT, DELETE, OPTIONS',
     credentials: true // Include if you need to allow cookies
 }));
