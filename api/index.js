@@ -8,11 +8,10 @@ const app = express()
 var path = require('path')
 app.set('view engine', 'ejs')
 
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, '../public')));
 
 app.use(cors({
-    // origin: 'http://localhost:3001', // Allow your frontend URL rawr
-    origin: 'wad2-vercel-ruddy.vercel.app',
+    origin: 'https://your-frontend.vercel.app', // Allow your frontend URL
     methods: 'GET, POST, PUT, DELETE, OPTIONS',
     credentials: true // Include if you need to allow cookies
 }));
@@ -20,7 +19,7 @@ app.use(cors({
 app.use(express.json());
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/index.html'));
+    res.sendFile(path.join(__dirname, '../public', 'index.html'));
 });
 
 app.post('/checkout', async (req, res) => {
@@ -55,13 +54,12 @@ app.post('/checkout', async (req, res) => {
 });
 
 app.get('/success', async (req, res) => {
-    res.sendFile(path.join(__dirname, 'public/success.html'))
+    res.sendFile(path.join(__dirname, 'views/success.html'))
 })
 
 app.get('/cancel', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public/cart.html'));
+    res.sendFile(path.join(__dirname, 'views/Cart.html'));
 })
 
-app.listen(3001, () => console.log('Server started on port 3001'));
 
 module.exports = app;
